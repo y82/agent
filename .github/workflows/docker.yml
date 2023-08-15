@@ -70,7 +70,6 @@ jobs:
           context: ./scripts/docker/official/nginx-oss-with-nginx-agent/alpine/
           platforms: linux/amd64
           push: false
-          load: true
           no-cache: true
           build-args: |
             NGINX_AGENT_VERSION=2.27.1
@@ -93,7 +92,6 @@ jobs:
           context: ./scripts/docker/official/nginx-oss-with-nginx-agent/alpine/
           platforms: linux/amd64
           push: false
-          load: true
           no-cache: true
           build-args: |
             NGINX_AGENT_VERSION=2.27.1
