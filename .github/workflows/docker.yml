@@ -1,6 +1,9 @@
 name: Publish Docker Images
 
 on:
+  push:
+    branches:
+      - "add-dockerhub-pipeline"
   workflow_dispatch:
     inputs:
       tag:
@@ -39,61 +42,61 @@ jobs:
     #     with:
     #       username: ${{ secrets.DOCKER_USERNAME }}
     #       password: ${{ secrets.DOCKER_PASSWORD }}
-        
-      - name: Get short tag
-        id: tag
-        run: |
-          version="${{ inputs.tag }}"
-          short="${version%.*}"
-          echo "short=$short" >> $GITHUB_OUTPUT
 
-      - name: Mainline Alpine Docker metadata
-        id: mainline-alpine-docker-metadata
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            name=nginx/nginx-agent
-          flavor: |
-            latest=${{ inputs.latest }}
-          tags: | 
-            type=raw,value=nginx-mainline-alpine,enable=${{ inputs.latest }}
-            type=raw,value=${{ inputs.tag }}-nginx-mainline-alpine
-            type=raw,value=${{ steps.tag.outputs.short }}-nginx-mainline-alpine
-      - name: Build Mainline Alpine Docker Image
-        uses: docker/build-push-action@v3
-        with:
-          file: Dockerfile.mainline
-          tags: ${{ steps.mainline-alpine-docker-metadata.outputs.tags }}
-          context: './scripts/docker/official/nginx-oss-with-nginx-agent/alpine/'
-          platforms: linux/amd64,linux/arm64
-          push: false
-          load: true
-          no-cache: true
-          build-args: |
-            NGINX_AGENT_VERSION=${{ inputs.tag }}
+    #   - name: Get short tag
+    #     id: tag
+    #     run: |
+    #       version="${{ inputs.tag }}"
+    #       short="${version%.*}"
+    #       echo "short=$short" >> $GITHUB_OUTPUT
 
-      - name: Stable Alpine Stable Docker metadata
-        id: stable-alpine-docker-metadata
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            name=nginx/nginx-agent
-          tags: | 
-            type=raw,value=nginx-stable-alpine,enable=${{ inputs.latest }}
-            type=raw,value=${{ inputs.tag }}-nginx-stable-alpine
-            type=raw,value=${{ steps.tag.outputs.short }}-nginx-stable-alpine
-      - name: Build Stable Alpine Docker Image
-        uses: docker/build-push-action@v3
-        with:
-          file: Dockerfile.stable
-          tags: ${{ steps.stable-alpine-docker-metadata.outputs.tags }}
-          context: './scripts/docker/official/nginx-oss-with-nginx-agent/alpine/'
-          platforms: linux/amd64,linux/arm64
-          push: false
-          load: true
-          no-cache: true
-          build-args: |
-            NGINX_AGENT_VERSION=${{ inputs.tag }}
+    #   - name: Mainline Alpine Docker metadata
+    #     id: mainline-alpine-docker-metadata
+    #     uses: docker/metadata-action@v4
+    #     with:
+    #       images: |
+    #         name=nginx/nginx-agent
+    #       flavor: |
+    #         latest=${{ inputs.latest }}
+    #       tags: | 
+    #         type=raw,value=nginx-mainline-alpine,enable=${{ inputs.latest }}
+    #         type=raw,value=${{ inputs.tag }}-nginx-mainline-alpine
+    #         type=raw,value=${{ steps.tag.outputs.short }}-nginx-mainline-alpine
+    #   - name: Build Mainline Alpine Docker Image
+    #     uses: docker/build-push-action@v3
+    #     with:
+    #       file: Dockerfile.mainline
+    #       tags: ${{ steps.mainline-alpine-docker-metadata.outputs.tags }}
+    #       context: './scripts/docker/official/nginx-oss-with-nginx-agent/alpine/'
+    #       platforms: linux/amd64,linux/arm64
+    #       push: false
+    #       load: true
+    #       no-cache: true
+    #       build-args: |
+    #         NGINX_AGENT_VERSION=${{ inputs.tag }}
+
+    #   - name: Stable Alpine Stable Docker metadata
+    #     id: stable-alpine-docker-metadata
+    #     uses: docker/metadata-action@v4
+    #     with:
+    #       images: |
+    #         name=nginx/nginx-agent
+    #       tags: | 
+    #         type=raw,value=nginx-stable-alpine,enable=${{ inputs.latest }}
+    #         type=raw,value=${{ inputs.tag }}-nginx-stable-alpine
+    #         type=raw,value=${{ steps.tag.outputs.short }}-nginx-stable-alpine
+    #   - name: Build Stable Alpine Docker Image
+    #     uses: docker/build-push-action@v3
+    #     with:
+    #       file: Dockerfile.stable
+    #       tags: ${{ steps.stable-alpine-docker-metadata.outputs.tags }}
+    #       context: './scripts/docker/official/nginx-oss-with-nginx-agent/alpine/'
+    #       platforms: linux/amd64,linux/arm64
+    #       push: false
+    #       load: true
+    #       no-cache: true
+    #       build-args: |
+    #         NGINX_AGENT_VERSION=${{ inputs.tag }}
       - name: List Images
         run: |
             docker images
