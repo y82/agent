@@ -1,6 +1,9 @@
 name: Publish Docker Images
 
 on:
+  push:
+    branches:
+      - "add-dockerhub-pipeline"
   workflow_dispatch:
     inputs:
       tag:
@@ -43,7 +46,7 @@ jobs:
       - name: Get short tag
         id: tag
         run: |
-          version="${{ inputs.tag }}"
+          version="2.27.1"
           short="${version%.*}"
           echo "short=$short" >> $GITHUB_OUTPUT
 
@@ -54,10 +57,10 @@ jobs:
           images: |
             name=nginx/nginx-agent
           flavor: |
-            latest=${{ inputs.latest }}
+            latest=true
           tags: | 
-            type=raw,value=nginx-mainline-alpine,enable=${{ inputs.latest }}
-            type=raw,value=${{ inputs.tag }}-nginx-mainline-alpine
+            type=raw,value=nginx-mainline-alpine,enable=true
+            type=raw,value=2.27.1-nginx-mainline-alpine
             type=raw,value=${{ steps.tag.outputs.short }}-nginx-mainline-alpine
       - name: Build Mainline Alpine Docker Image
         uses: docker/build-push-action@v3
@@ -70,7 +73,7 @@ jobs:
           load: true
           no-cache: true
           build-args: |
-            NGINX_AGENT_VERSION=${{ inputs.tag }}
+            NGINX_AGENT_VERSION=2.27.1
 
       - name: Stable Alpine Stable Docker metadata
         id: stable-alpine-docker-metadata
@@ -79,8 +82,8 @@ jobs:
           images: |
             name=nginx/nginx-agent
           tags: | 
-            type=raw,value=nginx-stable-alpine,enable=${{ inputs.latest }}
-            type=raw,value=${{ inputs.tag }}-nginx-stable-alpine
+            type=raw,value=nginx-stable-alpine,enable=true
+            type=raw,value=2.27.1-nginx-stable-alpine
             type=raw,value=${{ steps.tag.outputs.short }}-nginx-stable-alpine
       - name: Build Stable Alpine Docker Image
         uses: docker/build-push-action@v3
@@ -93,7 +96,7 @@ jobs:
           load: true
           no-cache: true
           build-args: |
-            NGINX_AGENT_VERSION=${{ inputs.tag }}
+            NGINX_AGENT_VERSION=2.27.1
       - name: List Images
         run: |
             docker images
