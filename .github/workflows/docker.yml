@@ -68,7 +68,7 @@ jobs:
           file: Dockerfile.mainline
           tags: ${{ steps.mainline-alpine-docker-metadata.outputs.tags }}
           context: './scripts/docker/official/nginx-oss-with-nginx-agent/alpine/'
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: false
           load: true
           no-cache: true
@@ -91,7 +91,7 @@ jobs:
           file: Dockerfile.stable
           tags: ${{ steps.stable-alpine-docker-metadata.outputs.tags }}
           context: './scripts/docker/official/nginx-oss-with-nginx-agent/alpine/'
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: false
           load: true
           no-cache: true
