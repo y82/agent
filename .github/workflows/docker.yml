@@ -100,10 +100,33 @@ jobs:
       - name: List Images
         run: |
             docker images
-      - name: Run Trivy Vulnerability Scanner
+      - name: Run Trivy Vulnerability Scanner (NGINX Mainline Version)
+        uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
+        continue-on-error: true
+        with:
+            image-ref: nginx/nginx-agent:${{ steps.mainline-alpine-docker-metadata.outputs.version }}
+            format: "sarif"
+            output: "trivy-results-mainline-alpine.sarif"
+      - name: Upload Scan Results (NGINX Mainline Version)
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        continue-on-error: true
+        with:
+            name: "trivy-results-mainline-alpine.sarif"
+            path: "trivy-results-mainline-alpine.sarif"
+            retention-days: 3
+        if: always()
+      - name: Run Trivy Vulnerability Scanner (NGINX Stable Version)
         uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
         continue-on-error: true
         with:
             image-ref: nginx/nginx-agent:${{ steps.stable-alpine-docker-metadata.outputs.version }}
             format: "sarif"
             output: "trivy-results-stable-alpine.sarif"
+      - name: Upload Scan Results (NGINX Stable Version)
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        continue-on-error: true
+        with:
+            name: "trivy-results-stable-alpine.sarif"
+            path: "trivy-results-stable-alpine.sarif"
+            retention-days: 3
+        if: always()
