@@ -31,7 +31,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2.2.0
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
       - name: Set up Docker Buildx
@@ -63,11 +63,11 @@ jobs:
             type=raw,value=2.27.1-nginx-mainline-alpine
             type=raw,value=${{ steps.tag.outputs.short }}-nginx-mainline-alpine
       - name: Build Mainline Alpine Docker Image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4.1.1
         with:
-          file: scripts/docker/official/nginx-oss-with-nginx-agent/alpine/Dockerfile.mainline
+          file: Dockerfile.mainline
           tags: ${{ steps.mainline-alpine-docker-metadata.outputs.tags }}
-          context: "."
+          context: ./scripts/docker/official/nginx-oss-with-nginx-agent/alpine/
           platforms: linux/amd64
           push: false
           load: true
@@ -86,11 +86,11 @@ jobs:
             type=raw,value=2.27.1-nginx-stable-alpine
             type=raw,value=${{ steps.tag.outputs.short }}-nginx-stable-alpine
       - name: Build Stable Alpine Docker Image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4.1.1
         with:
-          file: scripts/docker/official/nginx-oss-with-nginx-agent/alpine/Dockerfile.stable
+          file: Dockerfile.stable
           tags: ${{ steps.stable-alpine-docker-metadata.outputs.tags }}
-          context: "."
+          context: ./scripts/docker/official/nginx-oss-with-nginx-agent/alpine/
           platforms: linux/amd64
           push: false
           load: true
