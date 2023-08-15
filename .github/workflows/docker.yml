@@ -100,4 +100,10 @@ jobs:
       - name: List Images
         run: |
             docker images
-
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
+        continue-on-error: true
+        with:
+            image-ref: nginx/nginx-agent:${{ steps.stable-alpine-docker-metadata.outputs.version }}
+            format: "sarif"
+            output: "trivy-results-stable-alpine.sarif"
