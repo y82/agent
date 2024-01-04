@@ -1,7 +1,7 @@
 [Unit]
 Description=NGINX Agent
 Documentation=https://github.com/nginx/agent#readme
-After=network.target
+After=nginx.service
 Wants=network-online.target
 StartLimitIntervalSec=15
 StartLimitBurst=5
