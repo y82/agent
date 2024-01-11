@@ -1,12 +1,17 @@
-package configsources
+/**
+ * Copyright (c) F5, Inc.
+ *
+ * This source code is licensed under the Apache License, Version 2.0 license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+package client
 
 import (
 	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -32,9 +37,6 @@ func CreateTestIds() (uuid.UUID, uuid.UUID, error) {
 }
 
 func TestGetFilesMetadata(t *testing.T) {
-	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
-	logger := slog.New(handler)
-
 	tenantId, instanceId, err := CreateTestIds()
 
 	timeFile1, err := time.Parse(time.RFC3339, "2024-01-08T13:22:25Z")
@@ -67,7 +69,7 @@ func TestGetFilesMetadata(t *testing.T) {
 
 	filesUrl := fmt.Sprintf("%v/instance/%s/files/", ts.URL, instanceId)
 
-	hcd := NewHttpConfigDownloader(logger)
+	hcd := NewHttpConfigDownloader()
 
 	resp, err := hcd.GetFilesMetadata(filesUrl, tenantId)
 	if err != nil {
@@ -84,9 +86,6 @@ func TestGetFile(t *testing.T) {
 		fmt.Printf("Failed to create ID's")
 		log.Fatal(err)
 	}
-
-	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
-	logger := slog.New(handler)
 
 	test := "{\"encoded\":true,\"fileContent\":\"bG9jYXRpb24gL3Rlc3QgewogICAgcmV0dXJuIDIwMCAiVGVzdCBsb2NhdGlvblxuIjsKfQ==\",\"filePath\":\"/usr/local/etc/nginx/locations/test.conf\",\"instanceId\":\"aecea348-62c1-4e3d-b848-6d6cdeb1cb9c\",\"type\":\"\"}\n"
 
@@ -113,7 +112,7 @@ func TestGetFile(t *testing.T) {
 		FileContent: []byte("location /test {\n    return 200 \"Test location\\n\";\n}"),
 	}
 
-	hcd := NewHttpConfigDownloader(logger)
+	hcd := NewHttpConfigDownloader()
 	resp, err := hcd.GetFile(&file, filesUrl, tenantId)
 	if err != nil {
 		log.Fatal(err)

@@ -5,10 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-package configsources
+package client
 
 import (
-	// "encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -22,18 +21,16 @@ import (
 )
 
 type httpConfigDownloader struct {
-	logger     *slog.Logger
 	httpClient http.Client
 }
 
-func NewHttpConfigDownloader(logger *slog.Logger) *httpConfigDownloader {
+func NewHttpConfigDownloader() *httpConfigDownloader {
 	httpClient := http.Client{
 		Timeout: time.Second * 10,
 	}
 
 	return &httpConfigDownloader{
 		httpClient: httpClient,
-		logger:     logger,
 	}
 }
 
@@ -43,30 +40,28 @@ func (hcd *httpConfigDownloader) GetFilesMetadata(filesUrl string, tenantID uuid
 	req, err := http.NewRequest(http.MethodGet, filesUrl, nil)
 	req.Header.Set("tenantId", tenantID.String())
 	if err != nil {
-		hcd.logger.Error("Error making request", "err", err)
+		slog.Error("Error making request", "err", err)
 		return nil, err
 	}
 
 	resp, err := hcd.httpClient.Do(req)
 	if err != nil {
-		hcd.logger.Error("Error response from request", "err", err)
+		slog.Error("Error response from request", "err", err)
 		return nil, err
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		hcd.logger.Error("Error reading response body", "err", err)
+		slog.Error("Error reading response body", "err", err)
 		return nil, err
 	}
-
-	hcd.logger.Info("Files download", "files", data)
 
 	// TODO: look into why version is an unknown field and why this is needed
 	pb := protojson.UnmarshalOptions{DiscardUnknown: true}
 	err = pb.Unmarshal(data, &files)
 
 	if err != nil {
-		hcd.logger.Error("Error unmarshal data", "err", err)
+		slog.Error("Error unmarshal data", "err", err)
 		return nil, err
 	}
 
@@ -83,24 +78,23 @@ func (hcd *httpConfigDownloader) GetFile(file *instances.File, filesUrl string, 
 	filePath := url.QueryEscape(file.Path)
 
 	fileUrl := fmt.Sprintf("%v%v?%v", filesUrl, filePath, params.Encode())
-	hcd.logger.Info(fileUrl)
 
 	req, err := http.NewRequest(http.MethodGet, fileUrl, nil)
 	req.Header.Set("tenantId", tenantID.String())
 	if err != nil {
-		hcd.logger.Error("Error making request", "err", err)
+		slog.Error("Error making request", "err", err)
 		return nil, err
 	}
 
 	resp, err := hcd.httpClient.Do(req)
 	if err != nil {
-		hcd.logger.Error("Error response from request", "err", err)
+		slog.Error("Error response from request", "err", err)
 		return nil, err
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		hcd.logger.Error("Error reading response body", "err", err)
+		slog.Error("Error reading response body", "err", err)
 		return nil, err
 	}
 
@@ -109,7 +103,7 @@ func (hcd *httpConfigDownloader) GetFile(file *instances.File, filesUrl string, 
 	err = pb.Unmarshal(data, &response)
 
 	if err != nil {
-		hcd.logger.Error("Error unmarshal data", "err", err)
+		slog.Error("Error unmarshal data", "err", err)
 		return nil, err
 	}
 
