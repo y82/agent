@@ -20,21 +20,30 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-type httpConfigDownloader struct {
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6@v6.7.0 -generate
+//counterfeiter:generate -o mock_http_config_downloader.go . HttpConfigDownloaderInterface
+//go:generate sh -c "grep -v github.com/nginx/agent/v3/internal/client mock_http_config_downloader.go | sed -e s\\/client\\\\.\\/\\/g > mock_http_config_downloader_fixed.go"
+//go:generate mv mock_http_config_downloader_fixed.go mock_http_config_downloader.go
+type HttpConfigDownloaderInterface interface {
+	GetFilesMetadata(filesUrl string, tenantID uuid.UUID)
+	GetFile(file *instances.File, filesUrl string, tenantID uuid.UUID)
+}
+
+type HttpConfigDownloader struct {
 	httpClient http.Client
 }
 
-func NewHttpConfigDownloader() *httpConfigDownloader {
+func NewHttpConfigDownloader() *HttpConfigDownloader {
 	httpClient := http.Client{
 		Timeout: time.Second * 10,
 	}
 
-	return &httpConfigDownloader{
+	return &HttpConfigDownloader{
 		httpClient: httpClient,
 	}
 }
 
-func (hcd *httpConfigDownloader) GetFilesMetadata(filesUrl string, tenantID uuid.UUID) (*instances.Files, error) {
+func (hcd *HttpConfigDownloader) GetFilesMetadata(filesUrl string, tenantID uuid.UUID) (*instances.Files, error) {
 	files := instances.Files{}
 
 	req, err := http.NewRequest(http.MethodGet, filesUrl, nil)
@@ -68,7 +77,7 @@ func (hcd *httpConfigDownloader) GetFilesMetadata(filesUrl string, tenantID uuid
 	return &files, nil
 }
 
-func (hcd *httpConfigDownloader) GetFile(file *instances.File, filesUrl string, tenantID uuid.UUID) (*instances.FileDownloadResponse, error) {
+func (hcd *HttpConfigDownloader) GetFile(file *instances.File, filesUrl string, tenantID uuid.UUID) (*instances.FileDownloadResponse, error) {
 	response := instances.FileDownloadResponse{}
 	params := url.Values{}
 

@@ -132,13 +132,11 @@ filesLoop:
 			fileDownloadResponse, err := configDownloader.GetFile(fileData, filesUrl, tenantID)
 			if err != nil {
 				slog.Error("Error getting file data", "filesUrl", filesUrl, "err", err)
-				return nil, nil, err
 			}
 
 			err = WriteFile(fileDownloadResponse.FileContent, fileDownloadResponse.FilePath)
 			if err != nil {
 				slog.Error("Error writing to file", "filesUrl", filesUrl, "err", err)
-				return nil, nil, err
 			}
 
 			currentConfigApply[fileData.Path] = &instances.File{

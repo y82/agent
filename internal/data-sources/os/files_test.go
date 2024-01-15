@@ -8,11 +8,63 @@
 package os
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"path"
+	// "net/http"
+	// "net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
+	// "github.com/nginx/agent/v3/internal/client"
+	"github.com/nginx/agent/v3/internal/models/instances"
 	"github.com/stretchr/testify/assert"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func createCacheFile(t *testing.T, cachePath string) map[string]*instances.File {
+	timeFile1, err := time.Parse(time.RFC3339, "2024-01-08T13:22:23Z")
+	protoTimeFile1 := timestamppb.New(timeFile1)
+
+	timeFile2, err := time.Parse(time.RFC3339, "2024-01-08T13:22:25Z")
+	protoTimeFile2 := timestamppb.New(timeFile2)
+
+	timeFile3, err := time.Parse(time.RFC3339, "2024-01-08T13:22:21Z")
+	protoTimeFile3 := timestamppb.New(timeFile3)
+
+	cacheData := map[string]*instances.File{
+		"/usr/local/etc/nginx/locations/metrics.conf": {
+			LastModified: protoTimeFile1,
+			Path:         "/usr/local/etc/nginx/locations/metrics.conf",
+			Version:      "ibZkRVjemE5dl.tv88ttUJaXx6UJJMTu",
+		},
+		"/usr/local/etc/nginx/locations/test.conf": {
+			LastModified: protoTimeFile2,
+			Path:         "/usr/local/etc/nginx/locations/test.conf",
+			Version:      "Rh3phZuCRwNGANTkdst51he_0WKWy.tZ",
+		},
+		"/usr/local/etc/nginx/nginx.conf": {
+			LastModified: protoTimeFile3,
+			Path:         "/usr/local/etc/nginx/nginx.conf",
+			Version:      "BDEIFo9anKNvAwWm9O2LpfvNiNiGMx.c",
+		},
+	}
+
+	cache, err := json.MarshalIndent(cacheData, "", "  ")
+	assert.NoError(t, err)
+
+	err = os.MkdirAll(path.Dir(cachePath), 0o750)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(cachePath, cache, 0o644)
+	assert.FileExists(t, cachePath)
+	assert.NoError(t, err)
+
+	return cacheData
+}
 
 func TestWriteFile(t *testing.T) {
 	filePath := "/tmp/test.conf"
@@ -30,3 +82,67 @@ func TestWriteFile(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoFileExists(t, filePath)
 }
+
+func TestReadCache(t *testing.T) {
+	instanceId, err := uuid.Parse("aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
+	assert.NoError(t, err)
+	cachePath := fmt.Sprintf("/tmp/%v/cache.json", instanceId.String())
+
+	cacheData := createCacheFile(t, cachePath)
+
+	lastConfigApply, err := ReadCache(cachePath)
+	assert.NoError(t, err)
+	assert.Equal(t, cacheData, lastConfigApply)
+
+	err = os.Remove(cachePath)
+	assert.NoError(t, err)
+	assert.NoFileExists(t, cachePath)
+}
+
+func TestUpdateCache(t *testing.T) {
+	instanceId, err := uuid.Parse("aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
+	assert.NoError(t, err)
+	cachePath := fmt.Sprintf("/tmp/%v/cache.json", instanceId.String())
+
+	cacheData := createCacheFile(t, cachePath)
+
+	timeFile1, err := time.Parse(time.RFC3339, "2024-01-08T13:22:23Z")
+	protoTimeFile1 := timestamppb.New(timeFile1)
+
+	timeFile2, err := time.Parse(time.RFC3339, "2024-01-08T13:22:25Z")
+	protoTimeFile2 := timestamppb.New(timeFile2)
+
+	updateCacheData := map[string]*instances.File{
+		"/usr/local/etc/nginx/locations/metrics.conf": {
+			LastModified: protoTimeFile1,
+			Path:         "/usr/local/etc/nginx/locations/metrics.conf",
+			Version:      "ibZkRVjemE5dl.tv88ttUJaXx6UJJMTu",
+		},
+		"/usr/local/etc/nginx/test.conf": {
+			LastModified: protoTimeFile2,
+			Path:         "/usr/local/etc/nginx/test.conf",
+			Version:      "Rh3phZuCRwNGANTkdst51he_0WKWy.tZ",
+		},
+	}
+
+	err = UpdateCache(updateCacheData, cachePath)
+	assert.NoError(t, err)
+
+	data, err := ReadCache(cachePath)
+	assert.NoError(t, err)
+	assert.NotEqual(t, cacheData, data)
+
+	err = os.Remove(cachePath)
+	assert.NoError(t, err)
+	assert.NoFileExists(t, cachePath)
+}
+
+// func TestUpdateInstanceConfig(t *testing.T) {
+// 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		fmt.Fprintln(w, test)
+// 	}))
+// 	defer ts.Close()
+
+// 	configDownloader := client.NewHttpConfigDownloader()
+
+// }
