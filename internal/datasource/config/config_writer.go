@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	config2 "github.com/nginx/agent/v3/internal/config"
+
 	"github.com/nginx/agent/v3/internal/service/config"
 
 	"github.com/google/uuid"
@@ -35,6 +37,8 @@ type (
 	ConfigWriterInterface interface {
 		Write(ctx context.Context, filesURL string, tenantID uuid.UUID) (err error)
 		Complete() (err error)
+		Reload(instance *instances.Instance) (err error)
+		Validate(instance *instances.Instance) (err error)
 	}
 
 	ConfigWriter struct {
@@ -43,7 +47,7 @@ type (
 		currentFileCache   FileCache
 		cachePath          string
 		dataplaneConfig    config.DataplaneConfig
-		allowedDirectories []string
+		agentConfig        *config2.Config
 	}
 
 	// map of files with filepath as key
@@ -51,7 +55,7 @@ type (
 )
 
 func NewConfigWriter(configClient client.ConfigClientInterface,
-	allowedDirectories []string, instanceID string,
+	agentConfig *config2.Config, instanceID string,
 ) *ConfigWriter {
 	cachePath := fmt.Sprintf(cacheLocation, instanceID)
 
@@ -68,17 +72,18 @@ func NewConfigWriter(configClient client.ConfigClientInterface,
 		configClient:       configClient,
 		previouseFileCache: previousFileCache,
 		cachePath:          cachePath,
-		allowedDirectories: allowedDirectories,
+		agentConfig:        agentConfig,
 	}
 }
 
-func (cw *ConfigWriter) Write(ctx context.Context, filesURL string, tenantID uuid.UUID) (err error) {
+func (cw *ConfigWriter) Write(ctx context.Context, filesURL string, tenantID uuid.UUID,
+) (skippedFiles map[string]struct{}, err error) {
 	currentFileCache := make(FileCache)
-	skippedFiles := make(map[string]struct{})
+	skippedFiles = make(map[string]struct{})
 
 	filesMetaData, err := cw.configClient.GetFilesMetadata(ctx, filesURL, tenantID.String())
 	if err != nil {
-		return fmt.Errorf("error getting files metadata from %s: %w", filesURL, err)
+		return skippedFiles, fmt.Errorf("error getting files metadata from %s: %w", filesURL, err)
 	}
 
 	for _, fileData := range filesMetaData.GetFiles() {
@@ -91,14 +96,14 @@ func (cw *ConfigWriter) Write(ctx context.Context, filesURL string, tenantID uui
 		}
 		file, updateErr := cw.updateFile(ctx, fileData, filesURL, tenantID.String())
 		if updateErr != nil {
-			return updateErr
+			return skippedFiles, updateErr
 		}
 		currentFileCache[fileData.GetPath()] = file
 	}
 
 	cw.currentFileCache = currentFileCache
 
-	return err
+	return skippedFiles, err
 }
 
 func (cw *ConfigWriter) updateFile(ctx context.Context, fileData *instances.File,
@@ -136,6 +141,7 @@ func (cw *ConfigWriter) Complete() error {
 		return fmt.Errorf("error writing cache to %s: %w", cw.cachePath, err)
 	}
 
+	// TODO: update previous casche
 	return err
 }
 
@@ -192,7 +198,7 @@ func (cw *ConfigWriter) isFilePathValid(filePath string) (validPath bool) {
 	if filePath == "" || strings.HasSuffix(filePath, "/") {
 		return false
 	}
-	for _, dir := range cw.allowedDirectories {
+	for _, dir := range cw.agentConfig.AllowedDirectories {
 		if strings.HasPrefix(filePath, dir) {
 			return true
 		}

@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	config2 "github.com/nginx/agent/v3/internal/config"
+
 	"github.com/google/uuid"
 	"github.com/nginx/agent/v3/api/grpc/instances"
 	"github.com/nginx/agent/v3/internal/client/clientfakes"
@@ -160,9 +162,12 @@ func TestWriteConfig(t *testing.T) {
 			fakeConfigClient := &clientfakes.FakeConfigClientInterface{}
 			fakeConfigClient.GetFilesMetadataReturns(test.metaDataReturn, nil)
 			fakeConfigClient.GetFileReturns(test.getFileReturn, nil)
-			allowedDirs := []string{"./"}
 
-			configWriter := NewConfigWriter(fakeConfigClient, allowedDirs, instanceID.String())
+			agentConfig := config2.Config{
+				AllowedDirectories: []string{"./"},
+			}
+
+			configWriter := NewConfigWriter(fakeConfigClient, &agentConfig, instanceID.String())
 			configWriter.cachePath = cachePath
 			configWriter.previouseFileCache = previousFileCache
 
@@ -170,7 +175,7 @@ func TestWriteConfig(t *testing.T) {
 			require.NoError(t, err)
 			assert.FileExists(t, testConfPath)
 
-			err = configWriter.Write(ctx, filesURL, tenantID)
+			_, err = configWriter.Write(ctx, filesURL, tenantID)
 			require.NoError(t, err)
 
 			if test.shouldBeEqual {
@@ -212,10 +217,12 @@ func TestComplete(t *testing.T) {
 
 	cachePath := cacheFile.Name()
 
-	allowedDirs := []string{"./"}
+	agentConfig := config2.Config{
+		AllowedDirectories: []string{"./"},
+	}
 
 	fakeConfigClient := &clientfakes.FakeConfigClientInterface{}
-	configWriter := NewConfigWriter(fakeConfigClient, allowedDirs, instanceID.String())
+	configWriter := NewConfigWriter(fakeConfigClient, &agentConfig, instanceID.String())
 	configWriter.cachePath = cachePath
 
 	testConf, err := os.CreateTemp(".", "test.conf")
@@ -288,9 +295,11 @@ func TestComplete(t *testing.T) {
 
 func TestDataplaneConfig(t *testing.T) {
 	fakeConfigClient := &clientfakes.FakeConfigClientInterface{}
-	allowedDirs := []string{"./"}
+	agentConfig := config2.Config{
+		AllowedDirectories: []string{"./"},
+	}
 	cachePath := fmt.Sprintf(cacheLocation, "aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
-	configWriter := NewConfigWriter(fakeConfigClient, allowedDirs, "aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
+	configWriter := NewConfigWriter(fakeConfigClient, &agentConfig, "aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
 	configWriter.cachePath = cachePath
 	nginxConfig := config.NewNginx()
 
@@ -444,9 +453,11 @@ func TestIsFilePathValid(t *testing.T) {
 	}
 
 	fakeConfigClient := &clientfakes.FakeConfigClientInterface{}
-	allowedDirs := []string{"/tmp/"}
+	agentConfig := config2.Config{
+		AllowedDirectories: []string{"/tmp/"},
+	}
 	cachePath := fmt.Sprintf(cacheLocation, "aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
-	configWriter := NewConfigWriter(fakeConfigClient, allowedDirs, "aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
+	configWriter := NewConfigWriter(fakeConfigClient, &agentConfig, "aecea348-62c1-4e3d-b848-6d6cdeb1cb9c")
 	configWriter.cachePath = cachePath
 
 	for _, test := range tests {

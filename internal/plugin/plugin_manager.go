@@ -21,7 +21,7 @@ func LoadPlugins(agentConfig *config.Config, slogger *slog.Logger) []bus.Plugin 
 
 	instanceMonitor := NewInstance(&InstanceParameters{})
 
-	configPlugin := NewConfig()
+	configPlugin := NewConfig(agentConfig)
 
 	plugins = append(plugins, processMonitor, instanceMonitor, configPlugin)
 

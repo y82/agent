@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/nginx/agent/v3/api/grpc/instances"
 	"github.com/nginx/agent/v3/internal/datasource/config"
 )
 
@@ -18,6 +19,28 @@ type FakeConfigWriterInterface struct {
 		result1 error
 	}
 	completeReturnsOnCall map[int]struct {
+		result1 error
+	}
+	ReloadStub        func(*instances.Instance) error
+	reloadMutex       sync.RWMutex
+	reloadArgsForCall []struct {
+		arg1 *instances.Instance
+	}
+	reloadReturns struct {
+		result1 error
+	}
+	reloadReturnsOnCall map[int]struct {
+		result1 error
+	}
+	ValidateStub        func(*instances.Instance) error
+	validateMutex       sync.RWMutex
+	validateArgsForCall []struct {
+		arg1 *instances.Instance
+	}
+	validateReturns struct {
+		result1 error
+	}
+	validateReturnsOnCall map[int]struct {
 		result1 error
 	}
 	WriteStub        func(context.Context, string, uuid.UUID) error
@@ -90,6 +113,128 @@ func (fake *FakeConfigWriterInterface) CompleteReturnsOnCall(i int, result1 erro
 	}{result1}
 }
 
+func (fake *FakeConfigWriterInterface) Reload(arg1 *instances.Instance) error {
+	fake.reloadMutex.Lock()
+	ret, specificReturn := fake.reloadReturnsOnCall[len(fake.reloadArgsForCall)]
+	fake.reloadArgsForCall = append(fake.reloadArgsForCall, struct {
+		arg1 *instances.Instance
+	}{arg1})
+	stub := fake.ReloadStub
+	fakeReturns := fake.reloadReturns
+	fake.recordInvocation("Reload", []interface{}{arg1})
+	fake.reloadMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeConfigWriterInterface) ReloadCallCount() int {
+	fake.reloadMutex.RLock()
+	defer fake.reloadMutex.RUnlock()
+	return len(fake.reloadArgsForCall)
+}
+
+func (fake *FakeConfigWriterInterface) ReloadCalls(stub func(*instances.Instance) error) {
+	fake.reloadMutex.Lock()
+	defer fake.reloadMutex.Unlock()
+	fake.ReloadStub = stub
+}
+
+func (fake *FakeConfigWriterInterface) ReloadArgsForCall(i int) *instances.Instance {
+	fake.reloadMutex.RLock()
+	defer fake.reloadMutex.RUnlock()
+	argsForCall := fake.reloadArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeConfigWriterInterface) ReloadReturns(result1 error) {
+	fake.reloadMutex.Lock()
+	defer fake.reloadMutex.Unlock()
+	fake.ReloadStub = nil
+	fake.reloadReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeConfigWriterInterface) ReloadReturnsOnCall(i int, result1 error) {
+	fake.reloadMutex.Lock()
+	defer fake.reloadMutex.Unlock()
+	fake.ReloadStub = nil
+	if fake.reloadReturnsOnCall == nil {
+		fake.reloadReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.reloadReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeConfigWriterInterface) Validate(arg1 *instances.Instance) error {
+	fake.validateMutex.Lock()
+	ret, specificReturn := fake.validateReturnsOnCall[len(fake.validateArgsForCall)]
+	fake.validateArgsForCall = append(fake.validateArgsForCall, struct {
+		arg1 *instances.Instance
+	}{arg1})
+	stub := fake.ValidateStub
+	fakeReturns := fake.validateReturns
+	fake.recordInvocation("Validate", []interface{}{arg1})
+	fake.validateMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeConfigWriterInterface) ValidateCallCount() int {
+	fake.validateMutex.RLock()
+	defer fake.validateMutex.RUnlock()
+	return len(fake.validateArgsForCall)
+}
+
+func (fake *FakeConfigWriterInterface) ValidateCalls(stub func(*instances.Instance) error) {
+	fake.validateMutex.Lock()
+	defer fake.validateMutex.Unlock()
+	fake.ValidateStub = stub
+}
+
+func (fake *FakeConfigWriterInterface) ValidateArgsForCall(i int) *instances.Instance {
+	fake.validateMutex.RLock()
+	defer fake.validateMutex.RUnlock()
+	argsForCall := fake.validateArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeConfigWriterInterface) ValidateReturns(result1 error) {
+	fake.validateMutex.Lock()
+	defer fake.validateMutex.Unlock()
+	fake.ValidateStub = nil
+	fake.validateReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeConfigWriterInterface) ValidateReturnsOnCall(i int, result1 error) {
+	fake.validateMutex.Lock()
+	defer fake.validateMutex.Unlock()
+	fake.ValidateStub = nil
+	if fake.validateReturnsOnCall == nil {
+		fake.validateReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.validateReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeConfigWriterInterface) Write(arg1 context.Context, arg2 string, arg3 uuid.UUID) error {
 	fake.writeMutex.Lock()
 	ret, specificReturn := fake.writeReturnsOnCall[len(fake.writeArgsForCall)]
@@ -158,6 +303,10 @@ func (fake *FakeConfigWriterInterface) Invocations() map[string][][]interface{} 
 	defer fake.invocationsMutex.RUnlock()
 	fake.completeMutex.RLock()
 	defer fake.completeMutex.RUnlock()
+	fake.reloadMutex.RLock()
+	defer fake.reloadMutex.RUnlock()
+	fake.validateMutex.RLock()
+	defer fake.validateMutex.RUnlock()
 	fake.writeMutex.RLock()
 	defer fake.writeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
