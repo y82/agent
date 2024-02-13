@@ -32,10 +32,9 @@ const (
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6@v6.7.0 -generate
 //counterfeiter:generate . ConfigWriterInterface
-
 type (
 	ConfigWriterInterface interface {
-		Write(ctx context.Context, filesURL string, tenantID uuid.UUID) (err error)
+		Write(ctx context.Context, filesURL string, tenantID uuid.UUID) (map[string]struct{}, error)
 		Complete() (err error)
 		Reload(instance *instances.Instance) (err error)
 		Validate(instance *instances.Instance) (err error)
@@ -56,7 +55,7 @@ type (
 
 func NewConfigWriter(configClient client.ConfigClientInterface,
 	agentConfig *config.Config, instanceID string,
-) *ConfigWriter {
+) ConfigWriterInterface {
 	cachePath := fmt.Sprintf(cacheLocation, instanceID)
 
 	if configClient == nil {

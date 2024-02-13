@@ -43,7 +43,7 @@ type FakeConfigWriterInterface struct {
 	validateReturnsOnCall map[int]struct {
 		result1 error
 	}
-	WriteStub        func(context.Context, string, uuid.UUID) error
+	WriteStub        func(context.Context, string, uuid.UUID) (map[string]struct{}, error)
 	writeMutex       sync.RWMutex
 	writeArgsForCall []struct {
 		arg1 context.Context
@@ -51,10 +51,12 @@ type FakeConfigWriterInterface struct {
 		arg3 uuid.UUID
 	}
 	writeReturns struct {
-		result1 error
+		result1 map[string]struct{}
+		result2 error
 	}
 	writeReturnsOnCall map[int]struct {
-		result1 error
+		result1 map[string]struct{}
+		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -235,7 +237,7 @@ func (fake *FakeConfigWriterInterface) ValidateReturnsOnCall(i int, result1 erro
 	}{result1}
 }
 
-func (fake *FakeConfigWriterInterface) Write(arg1 context.Context, arg2 string, arg3 uuid.UUID) error {
+func (fake *FakeConfigWriterInterface) Write(arg1 context.Context, arg2 string, arg3 uuid.UUID) (map[string]struct{}, error) {
 	fake.writeMutex.Lock()
 	ret, specificReturn := fake.writeReturnsOnCall[len(fake.writeArgsForCall)]
 	fake.writeArgsForCall = append(fake.writeArgsForCall, struct {
@@ -251,9 +253,9 @@ func (fake *FakeConfigWriterInterface) Write(arg1 context.Context, arg2 string, 
 		return stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeConfigWriterInterface) WriteCallCount() int {
@@ -262,7 +264,7 @@ func (fake *FakeConfigWriterInterface) WriteCallCount() int {
 	return len(fake.writeArgsForCall)
 }
 
-func (fake *FakeConfigWriterInterface) WriteCalls(stub func(context.Context, string, uuid.UUID) error) {
+func (fake *FakeConfigWriterInterface) WriteCalls(stub func(context.Context, string, uuid.UUID) (map[string]struct{}, error)) {
 	fake.writeMutex.Lock()
 	defer fake.writeMutex.Unlock()
 	fake.WriteStub = stub
@@ -275,27 +277,30 @@ func (fake *FakeConfigWriterInterface) WriteArgsForCall(i int) (context.Context,
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *FakeConfigWriterInterface) WriteReturns(result1 error) {
+func (fake *FakeConfigWriterInterface) WriteReturns(result1 map[string]struct{}, result2 error) {
 	fake.writeMutex.Lock()
 	defer fake.writeMutex.Unlock()
 	fake.WriteStub = nil
 	fake.writeReturns = struct {
-		result1 error
-	}{result1}
+		result1 map[string]struct{}
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeConfigWriterInterface) WriteReturnsOnCall(i int, result1 error) {
+func (fake *FakeConfigWriterInterface) WriteReturnsOnCall(i int, result1 map[string]struct{}, result2 error) {
 	fake.writeMutex.Lock()
 	defer fake.writeMutex.Unlock()
 	fake.WriteStub = nil
 	if fake.writeReturnsOnCall == nil {
 		fake.writeReturnsOnCall = make(map[int]struct {
-			result1 error
+			result1 map[string]struct{}
+			result2 error
 		})
 	}
 	fake.writeReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
+		result1 map[string]struct{}
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeConfigWriterInterface) Invocations() map[string][][]interface{} {
