@@ -20,8 +20,6 @@ import (
 	"github.com/nginx/agent/v3/internal/bus"
 	"github.com/nginx/agent/v3/internal/config"
 	"github.com/nginx/agent/v3/internal/model"
-	"github.com/nginx/agent/v3/internal/service"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	sloggin "github.com/samber/slog-gin"
 	"google.golang.org/protobuf/types/known/timestamppb"
