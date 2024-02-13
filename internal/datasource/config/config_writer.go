@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	config2 "github.com/nginx/agent/v3/internal/config"
+	"github.com/nginx/agent/v3/internal/config"
 
-	"github.com/nginx/agent/v3/internal/service/config"
+	dataplaneconfig "github.com/nginx/agent/v3/internal/service/config"
 
 	"github.com/google/uuid"
 	"github.com/nginx/agent/v3/api/grpc/instances"
@@ -42,12 +42,12 @@ type (
 	}
 
 	ConfigWriter struct {
-		configClient       client.ConfigClientInterface
-		previouseFileCache FileCache
-		currentFileCache   FileCache
-		cachePath          string
-		dataplaneConfig    config.DataplaneConfig
-		agentConfig        *config2.Config
+		configClient      client.ConfigClientInterface
+		previousFileCache FileCache
+		currentFileCache  FileCache
+		cachePath         string
+		dataplaneConfig   dataplaneconfig.DataplaneConfig
+		agentConfig       *config.Config
 	}
 
 	// map of files with filepath as key
@@ -55,7 +55,7 @@ type (
 )
 
 func NewConfigWriter(configClient client.ConfigClientInterface,
-	agentConfig *config2.Config, instanceID string,
+	agentConfig *config.Config, instanceID string,
 ) *ConfigWriter {
 	cachePath := fmt.Sprintf(cacheLocation, instanceID)
 
@@ -69,10 +69,10 @@ func NewConfigWriter(configClient client.ConfigClientInterface,
 	}
 
 	return &ConfigWriter{
-		configClient:       configClient,
-		previouseFileCache: previousFileCache,
-		cachePath:          cachePath,
-		agentConfig:        agentConfig,
+		configClient:      configClient,
+		previousFileCache: previousFileCache,
+		cachePath:         cachePath,
+		agentConfig:       agentConfig,
 	}
 }
 
@@ -87,9 +87,9 @@ func (cw *ConfigWriter) Write(ctx context.Context, filesURL string, tenantID uui
 	}
 
 	for _, fileData := range filesMetaData.GetFiles() {
-		if !doesFileRequireUpdate(cw.previouseFileCache, fileData) {
+		if !doesFileRequireUpdate(cw.previousFileCache, fileData) {
 			slog.Debug("Skipping file as latest version is already on disk", "filePath", fileData.GetPath())
-			currentFileCache[fileData.GetPath()] = cw.previouseFileCache[fileData.GetPath()]
+			currentFileCache[fileData.GetPath()] = cw.previousFileCache[fileData.GetPath()]
 			skippedFiles[fileData.GetPath()] = struct{}{}
 
 			continue
@@ -141,11 +141,12 @@ func (cw *ConfigWriter) Complete() error {
 		return fmt.Errorf("error writing cache to %s: %w", cw.cachePath, err)
 	}
 
-	// TODO: update previous casche
+	cw.previousFileCache = cw.currentFileCache
+
 	return err
 }
 
-func (cw *ConfigWriter) SetDataplaneConfig(dataplaneConfig config.DataplaneConfig) {
+func (cw *ConfigWriter) SetDataplaneConfig(dataplaneConfig dataplaneconfig.DataplaneConfig) {
 	cw.dataplaneConfig = dataplaneConfig
 }
 

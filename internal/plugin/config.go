@@ -25,7 +25,7 @@ type Config struct {
 
 func NewConfig(agentConfig *config.Config) *Config {
 	return &Config{
-		configServices:  make(map[string]service.ConfigServiceInterface),
+		configServices:  make(map[string]service.ConfigServiceInterface), // key is instance id
 		instanceService: service.NewInstanceService(),
 		agentConfig:     agentConfig,
 	}

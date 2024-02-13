@@ -169,7 +169,7 @@ func TestWriteConfig(t *testing.T) {
 
 			configWriter := NewConfigWriter(fakeConfigClient, &agentConfig, instanceID.String())
 			configWriter.cachePath = cachePath
-			configWriter.previouseFileCache = previousFileCache
+			configWriter.previousFileCache = previousFileCache
 
 			err = writeFile(fileContent, testConfPath)
 			require.NoError(t, err)
