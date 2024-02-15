@@ -41,12 +41,10 @@ type (
 	}
 
 	ConfigWriter struct {
-		configClient      client.ConfigClientInterface
-		previousFileCache FileCache
-		currentFileCache  FileCache
-		cachePath         string
-		dataplaneConfig   dataplaneconfig.DataplaneConfig
-		agentConfig       *config.Config
+		configClient    client.ConfigClientInterface
+		cache           *Cache
+		dataplaneConfig dataplaneconfig.DataplaneConfig
+		agentConfig     *config.Config
 	}
 
 	// map of files with filepath as key
@@ -54,24 +52,20 @@ type (
 )
 
 func NewConfigWriter(configClient client.ConfigClientInterface,
-	agentConfig *config.Config, instanceID string,
+	agentConfig *config.Config, instanceID string, cache *Cache,
 ) ConfigWriterInterface {
-	cachePath := fmt.Sprintf(cacheLocation, instanceID)
-
 	if configClient == nil {
 		configClient = client.NewHTTPConfigClient(defaultClientTimeOut)
 	}
 
-	previousFileCache, err := readInstanceCache(cachePath)
-	if err != nil {
-		slog.Warn("Failed to Read cache %s ", cachePath, "err", err)
+	if cache.cachePath == "" {
+		cache = NewCache("", instanceID)
 	}
 
 	return &ConfigWriter{
-		configClient:      configClient,
-		previousFileCache: previousFileCache,
-		cachePath:         cachePath,
-		agentConfig:       agentConfig,
+		configClient: configClient,
+		cache:        cache,
+		agentConfig:  agentConfig,
 	}
 }
 
@@ -86,9 +80,9 @@ func (cw *ConfigWriter) Write(ctx context.Context, filesURL string, tenantID uui
 	}
 
 	for _, fileData := range filesMetaData.GetFiles() {
-		if !doesFileRequireUpdate(cw.previousFileCache, fileData) {
+		if !doesFileRequireUpdate(cw.cache.previousFileCache, fileData) {
 			slog.Debug("Skipping file as latest version is already on disk", "filePath", fileData.GetPath())
-			currentFileCache[fileData.GetPath()] = cw.previousFileCache[fileData.GetPath()]
+			currentFileCache[fileData.GetPath()] = cw.cache.previousFileCache[fileData.GetPath()]
 			skippedFiles[fileData.GetPath()] = struct{}{}
 
 			continue
@@ -100,7 +94,7 @@ func (cw *ConfigWriter) Write(ctx context.Context, filesURL string, tenantID uui
 		currentFileCache[fileData.GetPath()] = file
 	}
 
-	cw.currentFileCache = currentFileCache
+	cw.cache.currentFileCache = currentFileCache
 
 	return skippedFiles, err
 }
@@ -130,23 +124,27 @@ func (cw *ConfigWriter) updateFile(ctx context.Context, fileData *instances.File
 }
 
 func (cw *ConfigWriter) Complete() error {
-	cache, err := json.MarshalIndent(cw.currentFileCache, "", "  ")
+	cache, err := json.MarshalIndent(cw.cache.currentFileCache, "", "  ")
 	if err != nil {
-		return fmt.Errorf("error marshaling cache data from %s: %w", cw.cachePath, err)
+		return fmt.Errorf("error marshaling cache data from %s: %w", cw.cache.cachePath, err)
 	}
 
-	err = writeFile(cache, cw.cachePath)
+	err = writeFile(cache, cw.cache.cachePath)
 	if err != nil {
-		return fmt.Errorf("error writing cache to %s: %w", cw.cachePath, err)
+		return fmt.Errorf("error writing cache to %s: %w", cw.cache.cachePath, err)
 	}
 
-	cw.previousFileCache = cw.currentFileCache
+	cw.cache.previousFileCache = cw.cache.currentFileCache
 
 	return err
 }
 
 func (cw *ConfigWriter) SetDataplaneConfig(dataplaneConfig dataplaneconfig.DataplaneConfig) {
 	cw.dataplaneConfig = dataplaneConfig
+}
+
+func (cw *ConfigWriter) SetCache(cache Cache) {
+	cw.cache = &cache
 }
 
 func (cw *ConfigWriter) Reload(instance *instances.Instance) error {
@@ -175,24 +173,24 @@ func writeFile(fileContent []byte, filePath string) error {
 	return nil
 }
 
-func readInstanceCache(cachePath string) (previousFileCache FileCache, err error) {
-	previousFileCache = make(FileCache)
-
-	if _, statErr := os.Stat(cachePath); os.IsNotExist(statErr) {
-		return previousFileCache, fmt.Errorf("cache.json does not exist %s: %w", cachePath, statErr)
-	}
-
-	cacheData, err := os.ReadFile(cachePath)
-	if err != nil {
-		return previousFileCache, fmt.Errorf("error reading file cache.json %s: %w", cachePath, err)
-	}
-	err = json.Unmarshal(cacheData, &previousFileCache)
-	if err != nil {
-		return previousFileCache, fmt.Errorf("error unmarshalling data from cache.json %s: %w", cachePath, err)
-	}
-
-	return previousFileCache, err
-}
+// func readInstanceCache(cachePath string) (previousFileCache FileCache, err error) {
+//	previousFileCache = make(FileCache)
+//
+//	if _, statErr := os.Stat(cachePath); os.IsNotExist(statErr) {
+//		return previousFileCache, fmt.Errorf("cache.json does not exist %s: %w", cachePath, statErr)
+//	}
+//
+//	cacheData, err := os.ReadFile(cachePath)
+//	if err != nil {
+//		return previousFileCache, fmt.Errorf("error reading file cache.json %s: %w", cachePath, err)
+//	}
+//	err = json.Unmarshal(cacheData, &previousFileCache)
+//	if err != nil {
+//		return previousFileCache, fmt.Errorf("error unmarshalling data from cache.json %s: %w", cachePath, err)
+//	}
+//
+//	return previousFileCache, err
+//}
 
 func (cw *ConfigWriter) isFilePathValid(filePath string) (validPath bool) {
 	if filePath == "" || strings.HasSuffix(filePath, "/") {

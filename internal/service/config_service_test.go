@@ -121,14 +121,14 @@ func TestUpdateInstanceConfiguration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//mockConfigWriter := configfakes2.FakeConfigWriterInterface{}
+			// mockConfigWriter := configfakes2.FakeConfigWriterInterface{}
 			//
-			//mockConfigWriter.WriteReturns(test.writeErr)
-			//mockConfigWriter.ReloadReturns(test.reloadErr)
-			//mockConfigWriter.ValidateReturns(test.validateErr)
+			// mockConfigWriter.WriteReturns(test.writeErr)
+			// mockConfigWriter.ReloadReturns(test.reloadErr)
+			// mockConfigWriter.ValidateReturns(test.validateErr)
 
-			//cs.instanceConfigWriter = make(map[string]*config.ConfigWriter)
-			//cs.instanceConfigWriter[instanceID] = mockConfigWriter.
+			// cs.instanceConfigWriter = make(map[string]*config.ConfigWriter)
+			// cs.instanceConfigWriter[instanceID] = mockConfigWriter.
 
 			filesURL := fmt.Sprintf("/instance/%s/files/", instanceID)
 
