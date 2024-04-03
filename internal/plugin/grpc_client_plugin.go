@@ -104,7 +104,13 @@ func (gc *GrpcClient) Init(ctx context.Context, messagePipe bus.MessagePipeInter
 
 	slog.Debug("Connection created", "response", response)
 
-	gc.messagePipe.Process(ctx, &bus.Message{Topic: bus.ConfigClientTopic, Data: gc})
+	gc.messagePipe.Process(ctx, &bus.Message{
+		Topic: bus.ConfigClientTopic,
+		Data: &GrpcConfigClient{
+			grpcOverviewFn:     gc.GetOverview,
+			grpcDownloadFileFn: gc.DownloadFile,
+		},
+	})
 
 	return nil
 }
@@ -150,19 +156,46 @@ func (gc *GrpcClient) getDialOptions() []grpc.DialOption {
 	return opts
 }
 
-// Implement Config Client Interface
-
-func (gc *GrpcClient) GetFilesMetadata(
+func (gc *GrpcClient) GetOverview(
 	ctx context.Context,
 	filesURL, tenantID, instanceID string,
 ) (*instances.Files, error) {
 	return &instances.Files{}, nil
 }
 
-func (gc *GrpcClient) GetFile(
+func (gc *GrpcClient) DownloadFile(
 	ctx context.Context,
 	file *instances.File,
 	filesURL, tenantID, instanceID string,
 ) (*instances.FileDownloadResponse, error) {
 	return &instances.FileDownloadResponse{}, nil
+}
+
+// Implement Config Client Interface
+
+type GrpcConfigClient struct {
+	grpcOverviewFn func(
+		ctx context.Context,
+		filesURL, tenantID, instanceID string,
+	) (*instances.Files, error)
+	grpcDownloadFileFn func(
+		ctx context.Context,
+		file *instances.File,
+		filesURL, tenantID, instanceID string,
+	) (*instances.FileDownloadResponse, error)
+}
+
+func (gcc *GrpcConfigClient) GetFilesMetadata(
+	ctx context.Context,
+	filesURL, tenantID, instanceID string,
+) (*instances.Files, error) {
+	return gcc.grpcOverviewFn(ctx, filesURL, tenantID, instanceID)
+}
+
+func (gcc *GrpcConfigClient) GetFile(
+	ctx context.Context,
+	file *instances.File,
+	filesURL, tenantID, instanceID string,
+) (*instances.FileDownloadResponse, error) {
+	return gcc.grpcDownloadFileFn(ctx, file, filesURL, tenantID, instanceID)
 }
