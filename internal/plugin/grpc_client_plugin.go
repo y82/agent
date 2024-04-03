@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"github.com/nginx/agent/v3/api/grpc/instances"
 	"github.com/nginx/agent/v3/api/grpc/mpi/v1"
 	"github.com/nginx/agent/v3/internal/bus"
 	"github.com/nginx/agent/v3/internal/config"
@@ -103,6 +104,8 @@ func (gc *GrpcClient) Init(ctx context.Context, messagePipe bus.MessagePipeInter
 
 	slog.Debug("Connection created", "response", response)
 
+	gc.messagePipe.Process(ctx, &bus.Message{Topic: bus.ConfigClientTopic, Data: gc})
+
 	return nil
 }
 
@@ -145,4 +148,21 @@ func (gc *GrpcClient) getDialOptions() []grpc.DialOption {
 	}
 
 	return opts
+}
+
+// Implement Config Client Interface
+
+func (gc *GrpcClient) GetFilesMetadata(
+	ctx context.Context,
+	filesURL, tenantID, instanceID string,
+) (*instances.Files, error) {
+	return &instances.Files{}, nil
+}
+
+func (gc *GrpcClient) GetFile(
+	ctx context.Context,
+	file *instances.File,
+	filesURL, tenantID, instanceID string,
+) (*instances.FileDownloadResponse, error) {
+	return &instances.FileDownloadResponse{}, nil
 }

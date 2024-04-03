@@ -12,4 +12,5 @@ const (
 	InstanceConfigUpdateTopic        = "instance-config-update"
 	InstanceConfigContextTopic       = "instance-config-context"
 	MetricsTopic                     = "metrics"
+	ConfigClientTopic                = "config-client"
 )
