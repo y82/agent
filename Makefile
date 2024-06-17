@@ -278,7 +278,8 @@ image: ## Build agent container image for NGINX Plus, need nginx-repo.crt and ng
 		--build-arg PACKAGES_REPO=${PLUS_PACKAGES_REPO} \
 		--build-arg OS_RELEASE=${OS_RELEASE} \
 		--build-arg OS_VERSION=${OS_VERSION} \
-		--build-arg CONTAINER_REGISTRY=${CONTAINER_REGISTRY}
+		--build-arg CONTAINER_REGISTRY=${CONTAINER_REGISTRY} \
+		--build-arg ENTRY_POINT=./scripts/docker/entrypoint.sh
 
 oss-image: ## Build agent container image for NGINX OSS
 	@echo Building image with $(CONTAINER_CLITOOL); \
