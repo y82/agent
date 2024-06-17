@@ -1,12 +1,13 @@
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE} as install
+FROM ${BASE_IMAGE} as install-nginx
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
+ARG ENTRY_POINT
 ARG PACKAGES_REPO
 
 WORKDIR /agent
-COPY ./scripts/docker/entrypoint.sh /agent/entrypoint.sh
-COPY ./nginx-agent.conf /agent/nginx-agent.conf
+COPY ./build /agent/build
+COPY $ENTRY_POINT /agent/entrypoint.sh
 
 RUN --mount=type=secret,id=nginx-crt,dst=/etc/apk/cert.pem \
     --mount=type=secret,id=nginx-key,dst=/etc/apk/cert.key \
@@ -55,22 +56,36 @@ RUN --mount=type=secret,id=nginx-crt,dst=/etc/apk/cert.pem \
     # Prepare repo config and install NGINX Plus https://docs.nginx.com/nginx/admin-guide/installing-nginx/installing-nginx-plus/
     && wget -O /etc/apk/keys/nginx_signing.rsa.pub https://nginx.org/keys/nginx_signing.rsa.pub \
     && printf "https://$PACKAGES_REPO/plus/alpine/v`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release`/main/\n" | tee -a /etc/apk/repositories \
-    && printf "https://$PACKAGES_REPO/nginx-agent/alpine/v`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release`/main/\n" | tee -a /etc/apk/repositories \
     && nginxPackages=" \
         nginx-plus \
-        nginx-agent \
     " \
     && apk update \
     && apk add $nginxPackages
 
-# run the nginx and agent
-FROM install as runtime
+# Setup nginx agent repository
+RUN curl -o /etc/apk/keys/nginx_signing.rsa.pub https://nginx.org/keys/nginx_signing.rsa.pub
 
-COPY --from=install /agent/entrypoint.sh /agent/entrypoint.sh
-COPY --from=install /agent/nginx-agent.conf /etc/nginx-agent/nginx-agent.conf
+# RUN printf "%s%s%s\n" \
+#     "http://${PACKAGES_REPO}/nginx-agent/alpine/v" \
+#     `grep -o -E '^[0-9]+\.[0-9]+' /etc/alpine-release` \
+#     "/main" | tee -a /etc/apk/repositories
 
 RUN chmod +x /agent/entrypoint.sh
 STOPSIGNAL SIGTERM
+
 EXPOSE 80 443
 
 ENTRYPOINT ["/agent/entrypoint.sh"]
+
+
+FROM install-nginx as install-agent-local
+
+ARG PACKAGE_NAME
+
+RUN apk add --allow-untrusted /agent/build/${PACKAGE_NAME}.apk
+
+
+# FROM install-nginx as install-agent-repo
+
+# RUN apk add nginx-agent@nginx-agent
+

@@ -37,8 +37,8 @@ GOVET   = ${GOCMD} vet
 # | suse             | sles12sp5, sle15                          |                                                                |
 # | freebsd          |                                           | Not supported                                                  |
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-OS_RELEASE  ?= ubuntu
-OS_VERSION  ?= 24.04
+OS_RELEASE  ?= alpine
+OS_VERSION  ?= 3.20
 BASE_IMAGE  = "${CONTAINER_REGISTRY}/${OS_RELEASE}:${OS_VERSION}"
 IMAGE_TAG   = "agent_${OS_RELEASE}_${OS_VERSION}"
 
@@ -47,10 +47,10 @@ LDFLAGS = "-w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=$
 DEBUG_LDFLAGS = "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}"
 
 
-CERTS_DIR              := ./build/certs
+CERTS_DIR              := ../nginx-certs
 PACKAGE_PREFIX         := nginx-agent
 OSS_PACKAGES_REPO      := "packages.nginx.org"
-PLUS_PACKAGES_REPO     := "pkgs.nginx.com"
+PLUS_PACKAGES_REPO     := "pkgs-test.nginx.com"
 INSTALL_FROM_REPO      := ""
 OS                     := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 # override this value if you want to change the architecture. GOOS options here: https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63
@@ -273,6 +273,7 @@ image: ## Build agent container image for NGINX Plus, need nginx-repo.crt and ng
 		--no-cache -f ./scripts/docker/nginx-plus/${OS_RELEASE}/Dockerfile \
 		--secret id=nginx-crt,src=${CERTS_DIR}/nginx-repo.crt \
 		--secret id=nginx-key,src=${CERTS_DIR}/nginx-repo.key \
+		--build-arg PACKAGE_NAME=${PACKAGE_NAME} \
 		--build-arg BASE_IMAGE=${BASE_IMAGE} \
 		--build-arg PACKAGES_REPO=${PLUS_PACKAGES_REPO} \
 		--build-arg OS_RELEASE=${OS_RELEASE} \
